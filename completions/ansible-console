@@ -1,0 +1,56 @@
+# ansible-console(1) completion                                      -*- shell-script -*-
+
+_ansible-console()
+{
+    local cur prev words cword split
+    _init_completion -n : || return
+
+    case "$prev" in
+           -i|--inventory)
+                _known_hosts_real -P, $ipvx -- "$cur"
+                return
+            ;;
+            -l|--limit)
+                _known_hosts_real $ipvx -- "$cur"
+                return
+            ;;
+            -M|--module-path)
+                _filedir
+                return
+            ;;
+            -u|--user|--become-user)
+                _allowed_users
+                return
+            ;;
+    esac
+
+    if [[ "$cur" == -* ]]; then
+        # Complete -options
+        local shortopts longopts
+        shortopts='-C -D -e -f -h -i -l -M -v -k -u -c -T -b -K'
+        longopts='--ask-vault-pass --check --diff --forks --help 
+	--inventory --limit --list-hosts --module-path 
+	--playbook-dir --step --syntax-check --vault-id 
+        --vault-password-file --verbose --version --ask-pass --private-key 
+        --key-file --user --connection --timeout --ssh-common-args --sftp-extra-args 
+        --scp-extra-args --ssh-extra-args --become --become-method --become-user 
+        --ask-become-pass'
+        COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) )
+    elif [[ "$cur" == --* ]]; then
+        COMPREPLY=( $( compgen -W '$longopts' -- "$cur" ) )
+    else
+        local args ipvx
+
+        # The first argument is an usergroup; the rest are filedir.
+        _count_args :
+
+        if [[ $args -eq 1 ]]; then
+            _known_hosts_real $ipvx -- "$cur"
+        else
+            _filedir
+        fi
+    fi
+} &&
+complete -F _ansible-console ansible-console
+
+# ex: filetype=sh

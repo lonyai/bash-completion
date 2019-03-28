@@ -1,0 +1,44 @@
+# ansible-doc(1) completion                                      -*- shell-script -*-
+
+_ansible-doc()
+{
+    local cur prev words cword split
+    _init_completion -n : || return
+
+    case "$prev" in
+            -M|--module-path)
+                _filedir
+                return
+            ;;
+            -t|--type)
+		    COMPREPLY=( $( compgen -W "cache callback connection inventory lookup shell module strategy vars" -- "$cur" ) )
+                return
+            ;;
+    esac
+
+    if [[ "$cur" == -* ]]; then
+        # Complete -options
+        local shortopts longopts
+        shortopts='-h -l -F -M -s -t -v'
+        longopts='--help --list --list_files --module-path --snippet --type --verbose --version'
+        COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) )
+    elif [[ "$cur" == --* ]]; then
+        COMPREPLY=( $( compgen -W '$longopts' -- "$cur" ) )
+    else
+        local args ipvx
+
+        # The first argument is an usergroup; the rest are filedir.
+        _count_args :
+
+        local type i
+        for (( i=0; i < ${#words[@]}-1; i++ )); do
+          if [[ ${words[i]} == @(-t|--type) ]]; then
+            type=${words[$((i+1))]}
+          fi
+        done
+        COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -t ${type:-module} -l | /bin/awk '{print $1}')" -- "$cur") )
+    fi
+} &&
+complete -F _ansible-doc ansible-doc
+
+# ex: filetype=sh
